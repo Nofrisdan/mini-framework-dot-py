@@ -84,10 +84,11 @@ def remove_file(args):
 
     # remove script in main
     routes_name = args.remove[0]
-    script = 'app.include_router(main_routes,tags=["%s ROUTES"],prefix=END_POINT+"%s")'%(routes_name.upper(),"/"+routes_name)
+    importingScript = "from routes.%sRoutes import %s_routes"%(routes_name,routes_name)
+    script = 'app.include_router(%s_routes,tags=["%s ROUTES"],prefix=END_POINT+"%s")'%(routes_name,routes_name.upper(),"/"+routes_name)
     with open('main.py','r') as file:
         lines = file.readlines()
-    lines = [line for line in lines if line.strip() != script]
+    lines = [line for line in lines if line.strip() != script and line.strip() != importingScript] 
     with open('main.py','w') as file:
         file.writelines(lines)
 
@@ -152,10 +153,10 @@ from controller.%sController import *
 # create routes
 @%s_routes.get("/")
 async def get_all_data_main():
-    return main_controller()
+    return %s_controller()
 
 
-    """ % (args.make[0],args.make[0],args.make[0],args.make[0])
+    """ % (args.make[0],args.make[0],args.make[0],args.make[0],args.make[0])
         
         file.write(controller_code)
         return True
@@ -189,9 +190,31 @@ def all_model_serializer(alldata):
 # make main
 def make_main(args):
     routes_name = args.make[0]
-    script = '\napp.include_router(main_routes,tags=["%s ROUTES"],prefix=END_POINT+"%s")\n'%(routes_name.upper(),"/"+routes_name)
+    paramater = "# instance routes"
+    importingScript = "from routes.%sRoutes import %s_routes \n"%(routes_name,routes_name)
+    script = '\napp.include_router(%s_routes,tags=["%s ROUTES"],prefix=END_POINT+"%s")\n'%(routes_name,routes_name.upper(),"/"+routes_name)
+    
+    
     with open("main.py","a") as file:
         file.write(script)
+
+
+    # adding importing line
+    line_number = -1
+    with open("main.py","r") as file :
+        lines = file.readlines()
+
+    for i,line in enumerate(lines):
+        if line.strip() == paramater:
+            line_number = i
+            break
+    
+    if line_number != -1:
+        lines.insert(line_number+1,importingScript)
+    
+    with open("main.py","w") as file:
+        file.writelines(lines)
+
 
 # main
 def main():
@@ -220,5 +243,7 @@ def main():
 
 
 
+
 if __name__ == "__main__":
     main()
+    # testing()
